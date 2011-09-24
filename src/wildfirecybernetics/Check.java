@@ -5,68 +5,92 @@ import java.util.ArrayList;
 
 public class Check {
 
-    private BigDecimal  _gratuityAmount;
-    private BigDecimal  _gratuityPercentage;
-    private BigDecimal  _total;
-    private BigDecimal  _deductions;
-    private BigDecimal  _tax;
-    private ArrayList<Split> _splits;
+    private Money               _gratuityAmount;
+    private BigDecimal          _gratuityPercentage;
+    private Money               _total;
+    private Money               _deduction;
+    private Money               _tax;
+    private ArrayList<Split>    _splits;
 
-    public Check(BigDecimal total, BigDecimal deductions, 
-            BigDecimal tax, BigDecimal gratuityPercentage) {
+    public Check() {
         _splits = new ArrayList<Split>();
-        _total = new BigDecimal(total.toString());
-        _deductions = new BigDecimal(deductions.toString());
-        _tax = new BigDecimal(tax.toString());
-        _gratuityPercentage = new BigDecimal(gratuityPercentage.toString());
-        _gratuityAmount = Calculate();
+        _total = new Money(new BigDecimal("0.00"));
+        _deduction = new Money(new BigDecimal("0.00"));
+        _tax = new Money(new BigDecimal("0.00"));
+        _gratuityPercentage = new BigDecimal("0.00");
+        Calculate();
     }
 
-    public void SetTotal(BigDecimal total) {
+    public Check(Split split, Money total, Money deduction,
+            Money tax, BigDecimal gratuityPercentage) {
+        _splits = new ArrayList<Split>();
+        _splits.add(split);
         _total = total;
+        _deduction = deduction;
+        _tax = tax;
+        _gratuityPercentage = gratuityPercentage;
+        Calculate();
     }
 
-    public BigDecimal GetTotal() {
+    public void AddSplit(Split split) {
+        _splits.add(split);
+    }
+
+    public void RemoveSplit(Split split) {
+        _splits.remove(split);
+    }
+
+    public void SetTotal(Money total) {
+        _total = total;
+        Calculate();
+    }
+
+    public Money GetTotal() {
         return _total;
     }
 
-    public void SetDeductions(BigDecimal deductions) {
-        _deductions = deductions;
+    public void SetDeductions(Money deduction) {
+        _deduction = deduction;
+        Calculate();
     }
 
-    public BigDecimal GetDeductions() {
-        return _deductions;
+    public Money GetDeductions() {
+        return _deduction;
     }
 
-    public void SetTax(BigDecimal tax) {
+    public void SetTax(Money tax) {
         _tax = tax;
+        Calculate();
     }
 
-    public BigDecimal GetTax() {
+    public Money GetTax() {
         return _tax;
     }
 
     public void SetGratuityPercentage(BigDecimal gratuityPercentage) {
         _gratuityPercentage = gratuityPercentage;
+        Calculate();
     }
 
     public BigDecimal GetGratuityPercentage() {
         return _gratuityPercentage;
     }
 
-    public BigDecimal GetGratuityAmount() {
+    public Money GetGratuityAmount() {
+        Calculate();
         return _gratuityAmount;
     }
 
-    private BigDecimal Calculate() {
-        BigDecimal gratuity = new BigDecimal("0.00");
-        
-        if(_total.compareTo(_total) <= 1) {
-            BigDecimal total = _total.subtract(_deductions);
-            total = total.add(_tax);
-            gratuity = total.multiply(_gratuityPercentage);
+    public Money GetTotalPlusGratuity() {
+        Money bd = _total.plus(_gratuityAmount);
+        return bd;
+    }
+
+    private void Calculate() {
+        if(_deduction.compareTo(_total) <= 1) {
+            Money total = _total.minus(_deduction);
+            total = total.plus(_tax);
+            _gratuityAmount = total.times(_gratuityPercentage.doubleValue());
         }
-        
-        return gratuity;
     }
 }

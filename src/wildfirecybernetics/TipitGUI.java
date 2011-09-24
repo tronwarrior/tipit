@@ -11,6 +11,9 @@
 
 package wildfirecybernetics;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Currency;
+import java.util.Locale;
 
 /**
  *
@@ -22,10 +25,21 @@ public class TipitGUI extends javax.swing.JFrame {
     /** Creates new form TipitGUI */
     public TipitGUI() {
         initComponents();
-        Check c = new Check(new BigDecimal("20.00"), new BigDecimal("0.00"),
-                new BigDecimal("0.00"), new BigDecimal("0.08") );
-
+        Money.init(Currency.getInstance(Locale.US), RoundingMode.HALF_EVEN);
         _calc = new GratuityCalculator();
+        BigDecimal bd = new BigDecimal(_serviceQuality.getValue());
+        bd = bd.divide(new BigDecimal("100"));
+        _calc.GetCurrentEncounter().get_check().SetGratuityPercentage(bd);
+    }
+
+    private void RefreshDisplay() {
+        Money mtip = _calc.GetCurrentEncounter().get_check().GetGratuityAmount();
+        _totalTip.setText(mtip.toString());
+
+        Money mperPerson = mtip.div(((Integer) _numberOfGuests.getValue()));
+        _tipPerPerson.setText(mperPerson.toString());
+
+        _total.setText(_calc.GetCurrentEncounter().get_check().GetTotalPlusGratuity().toString());
     }
 
     /** This method is called from within the constructor to
@@ -53,11 +67,11 @@ public class TipitGUI extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         _tipRate = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
-        _totalTip = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
-        _tipPerPerson = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
-        _total = new javax.swing.JTextField();
+        _totalTip = new javax.swing.JFormattedTextField();
+        _tipPerPerson = new javax.swing.JFormattedTextField();
+        _total = new javax.swing.JFormattedTextField();
         _tipTailoring = new javax.swing.JButton();
         _configureTipItems = new javax.swing.JButton();
 
@@ -141,14 +155,29 @@ public class TipitGUI extends javax.swing.JFrame {
         _billTotal.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
         _billTotal.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         _billTotal.setText("0.00");
+        _billTotal.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                _billTotalFocusLost(evt);
+            }
+        });
 
-        _billDeductions.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.##"))));
+        _billDeductions.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
         _billDeductions.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         _billDeductions.setText("0.00");
+        _billDeductions.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                _billDeductionsFocusLost(evt);
+            }
+        });
 
-        _tax.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter()));
+        _tax.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
         _tax.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         _tax.setText("0.00");
+        _tax.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                _taxFocusLost(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -190,6 +219,7 @@ public class TipitGUI extends javax.swing.JFrame {
         jLabel6.setText("Tip Rate");
 
         _tipRate.setEditable(false);
+        _tipRate.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         _tipRate.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         _tipRate.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
@@ -199,26 +229,24 @@ public class TipitGUI extends javax.swing.JFrame {
 
         jLabel7.setText("Total Tip");
 
-        _totalTip.setEditable(false);
-        _totalTip.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        _totalTip.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-
         jLabel8.setText("Tip per Person");
-
-        _tipPerPerson.setEditable(false);
-        _tipPerPerson.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        _tipPerPerson.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        _tipPerPerson.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                _tipPerPersonActionPerformed(evt);
-            }
-        });
 
         jLabel9.setText("Total (Bill and Tip)");
 
-        _total.setEditable(false);
-        _total.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        _totalTip.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        _totalTip.setEditable(false);
+        _totalTip.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(java.text.NumberFormat.getCurrencyInstance())));
+        _totalTip.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+
+        _tipPerPerson.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        _tipPerPerson.setEditable(false);
+        _tipPerPerson.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(java.text.NumberFormat.getCurrencyInstance())));
+        _tipPerPerson.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+
         _total.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        _total.setEditable(false);
+        _total.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(java.text.NumberFormat.getCurrencyInstance())));
+        _total.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -226,22 +254,23 @@ public class TipitGUI extends javax.swing.JFrame {
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel6)
                             .addComponent(jLabel7)
                             .addComponent(jLabel8))
                         .addGap(35, 35, 35)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(_tipPerPerson)
-                            .addComponent(_tipRate, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(_totalTip, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jLabel9)
-                        .addGap(18, 18, 18)
-                        .addComponent(_total)))
-                .addContainerGap(148, Short.MAX_VALUE))
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addComponent(_tipRate, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(72, 72, 72))
+                            .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(_totalTip, javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(_tipPerPerson, javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(_total, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE))))
+                    .addComponent(jLabel9))
+                .addGap(106, 106, 106))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -276,7 +305,7 @@ public class TipitGUI extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(_tipTailoring, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -298,7 +327,7 @@ public class TipitGUI extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(_tipTailoring)
                     .addComponent(_configureTipItems))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(15, Short.MAX_VALUE))
         );
 
         pack();
@@ -311,12 +340,17 @@ public class TipitGUI extends javax.swing.JFrame {
     private void _numberOfGuestsStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event__numberOfGuestsStateChanged
         // TODO add your handling code here:
         Integer n = (Integer) _numberOfGuests.getValue();
+        RefreshDisplay();
     }//GEN-LAST:event__numberOfGuestsStateChanged
 
     private void _serviceQualityStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event__serviceQualityStateChanged
         // TODO add your handling code here:
-        Integer n = (Integer) _serviceQuality.getValue();
-        _tipRate.setText(n.toString() + "%");
+        _tipRate.setText(_serviceQuality.getValue() + "%");
+        
+        BigDecimal bd = new BigDecimal(_serviceQuality.getValue());
+        bd = bd.divide(new BigDecimal("100"));
+        _calc.GetCurrentEncounter().get_check().SetGratuityPercentage(bd);
+       RefreshDisplay();
     }//GEN-LAST:event__serviceQualityStateChanged
 
     private void _tipRatePropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event__tipRatePropertyChange
@@ -325,9 +359,29 @@ public class TipitGUI extends javax.swing.JFrame {
         _tipRate.setText(n.toString() + "%");
     }//GEN-LAST:event__tipRatePropertyChange
 
-    private void _tipPerPersonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event__tipPerPersonActionPerformed
+    private void _billTotalFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event__billTotalFocusLost
         // TODO add your handling code here:
-    }//GEN-LAST:event__tipPerPersonActionPerformed
+        String s = _billTotal.getText();
+        Money billTotal = new Money(new BigDecimal(s));
+        _calc.GetCurrentEncounter().get_check().SetTotal(billTotal);
+       RefreshDisplay();
+    }//GEN-LAST:event__billTotalFocusLost
+
+    private void _billDeductionsFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event__billDeductionsFocusLost
+        // TODO add your handling code here:
+        String s = _billDeductions.getText();
+        Money billDeductions = new Money(new BigDecimal(s));
+        _calc.GetCurrentEncounter().get_check().SetDeductions(billDeductions);
+       RefreshDisplay();
+    }//GEN-LAST:event__billDeductionsFocusLost
+
+    private void _taxFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event__taxFocusLost
+        // TODO add your handling code here:
+        String s = _tax.getText();
+        Money tax = new Money(new BigDecimal(s));
+        _calc.GetCurrentEncounter().get_check().SetDeductions(tax);
+       RefreshDisplay();
+    }//GEN-LAST:event__taxFocusLost
 
     /**
     * @param args the command line arguments
@@ -347,11 +401,11 @@ public class TipitGUI extends javax.swing.JFrame {
     private javax.swing.JSpinner _numberOfGuests;
     private javax.swing.JSlider _serviceQuality;
     private javax.swing.JFormattedTextField _tax;
-    private javax.swing.JTextField _tipPerPerson;
+    private javax.swing.JFormattedTextField _tipPerPerson;
     private javax.swing.JTextField _tipRate;
     private javax.swing.JButton _tipTailoring;
-    private javax.swing.JTextField _total;
-    private javax.swing.JTextField _totalTip;
+    private javax.swing.JFormattedTextField _total;
+    private javax.swing.JFormattedTextField _totalTip;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

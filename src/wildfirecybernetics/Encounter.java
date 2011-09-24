@@ -2,7 +2,6 @@ package wildfirecybernetics;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.math.BigDecimal;
 
 public class Encounter {
 
@@ -11,8 +10,7 @@ public class Encounter {
     private Check _check;
 
     public Encounter() {
-        _check = new Check(new BigDecimal("0.00"), new BigDecimal("0.00"),
-                new BigDecimal("0.00"), new BigDecimal("0.00"));
+        _check = new Check();
         _date = new Date();
         _participants = new ArrayList<Participant>();
         _participants.add(new Participant("Guest"));
